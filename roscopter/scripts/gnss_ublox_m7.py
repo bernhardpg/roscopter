@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import pyproj
+import math
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import TwistWithCovarianceStamped
 from rosflight_msgs.msg import GNSS
@@ -32,8 +33,10 @@ class gnss_ublox_m7:
         self.pos = self.lla_to_ecef(pos_lla)
 
         # covariance matrix is diagonal, and lat/long covariance are equal
-        self.horizontal_accuracy = msg.position_covariance[0]
-        self.vertical_accuracy = msg.position_covariance[8]
+        std_x_squared = msg.position_covariance[0]
+        std_y_squared = msg.position_covariance[3]
+        self.horizontal_accuracy = math.sqrt(std_x_squared + std_y_squared) # Use DRMS as accuracy measure
+        self.vertical_accuracy = math.sqrt(msg.position_covariance[8]) # Simply use std for 1D accuracy
 
         if self.velocity == None: # Wait for both pos and vel to be updated
             return
@@ -56,7 +59,7 @@ class gnss_ublox_m7:
         ]
 
         # All speed covariances are similar, so first one is picked
-        self.speed_accuracy = msg.twist.covariance[0]
+        self.speed_accuracy = math.sqrt(msg.twist.covariance[0]) # Use std for speed accuracy
 
         if self.position == None: # Wait for both pos and vel to be updated
             return
