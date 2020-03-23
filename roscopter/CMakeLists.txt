@@ -87,3 +87,8 @@ add_dependencies(ekf_node ${catkin_EXPORTED_TARGETS})
 add_executable(ekf_rosbag src/ekf/ekf_rosbag.cpp)
 target_link_libraries(ekf_rosbag ekf_ros ${catkin_LIBRARIES})
 add_dependencies(ekf_rosbag ${catkin_EXPORTED_TARGETS})
+
+add_executable(publish_arm scripts/publish_arm.cpp)
+target_link_libraries(publish_arm ${catkin_LIBRARIES})
+
+
