@@ -7,7 +7,7 @@ from geometry_msgs.msg import TwistWithCovarianceStamped
 from rosflight_msgs.msg import GNSS
 
 
-class gnss_ublox_m7:
+class gnss_ublox:
     def __init__(self):
         self.ecef = pyproj.Proj(proj="geocent", ellps="WGS84", datum="WGS84")
         self.lla = pyproj.Proj(proj="latlong", ellps="WGS84", datum="WGS84")
@@ -19,8 +19,7 @@ class gnss_ublox_m7:
             "ublox_gps/fix_velocity", TwistWithCovarianceStamped, self.fix_velocity_callback
         )
 
-        # TODO change queue size?
-        self.pub = rospy.Publisher("ublox_gnss_test", GNSS, queue_size=100)
+        self.pub = rospy.Publisher("ublox_gnss_test", GNSS, queue_size=1000)
 	rospy.spin()
 
     def lla_to_ecef(self, coord_lla):
@@ -77,8 +76,8 @@ class gnss_ublox_m7:
 
 
 if __name__ == "__main__":
-    rospy.init_node("gnss_ublox_m7", anonymous=False)  # TODO change to true?
+    rospy.init_node("gnss_ublox", anonymous=False)
     try:
-        gnss_ublox_m7()
+        gnss_ublox()
     except:
         rospy.ROSInterruptException
