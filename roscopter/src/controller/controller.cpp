@@ -135,6 +135,14 @@ void Controller::cmdCallback(const rosflight_msgs::CommandConstPtr &msg)
       xc_.r = msg->z;
       control_mode_ = msg->mode;
       break;
+		// TODO Custom NOROBO Mode
+		case rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_ALTITUDE:
+			xc_.phi = msg->x;
+			xc_.theta = msg->y;
+			xc_.pd = msg->F;
+      xc_.r = msg->z;
+			control_mode_ = msg->mode;
+			break;
     default:
       ROS_ERROR("roscopter/controller: Unhandled command message of type %d",
                 msg->mode);
@@ -286,6 +294,22 @@ void Controller::computeControl(double dt)
     xc_.throttle = (1.0 - xc_.az) * throttle_eq_ / cosp / cost;
 
     mode_flag = rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_THROTTLE;
+  }
+
+	// TODO Custom Norobo mode
+  if(mode_flag == rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_ALTITUDE)
+  {
+    // Nested Loop for Altitude
+    double pddot_c = PID_d_.computePID(xc_.pd, xhat_.pd, dt, pddot);
+    xc_.az = PID_z_dot_.computePID(pddot_c, pddot, dt);
+
+    // Compute desired thrust based on current pose
+    double cosp = cos(xhat_.phi);
+    double cost = cos(xhat_.theta);
+    xc_.throttle = (1.0 - xc_.az) * throttle_eq_ / cosp / cost;
+
+		// The rest of the parameters will be sent in the next if block
+		mode_flag = rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_THROTTLE;
   }
 
   if(mode_flag == rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_THROTTLE)
