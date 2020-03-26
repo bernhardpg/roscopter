@@ -135,14 +135,15 @@ void Controller::cmdCallback(const rosflight_msgs::CommandConstPtr &msg)
       xc_.r = msg->z;
       control_mode_ = msg->mode;
       break;
-		// TODO Custom NOROBO Mode
-		case rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_ALTITUDE:
-			xc_.phi = msg->x;
-			xc_.theta = msg->y;
-			xc_.pd = msg->F;
-      xc_.r = msg->z;
-			control_mode_ = msg->mode;
-			break;
+	// TODO Custom NOROBO Mode
+	case rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_ALTITUDE:
+		ROS_INFO("NOROBO Running custom mode");
+		xc_.phi = msg->x;
+		xc_.theta = msg->y;
+		xc_.pd = -msg->F;
+  xc_.r = msg->z;
+		control_mode_ = msg->mode;
+		break;
     default:
       ROS_ERROR("roscopter/controller: Unhandled command message of type %d",
                 msg->mode);
@@ -228,6 +229,8 @@ void Controller::computeControl(double dt)
   {
     // Figure out desired velocities (in inertial frame)
     // By running the position controllers
+    double cosp = cos(xhat_.phi);
+    double cost = cos(xhat_.theta);
     double pndot_c = PID_n_.computePID(xc_.pn, xhat_.pn, dt);
     double pedot_c = PID_e_.computePID(xc_.pe, xhat_.pe, dt);
 
@@ -299,17 +302,23 @@ void Controller::computeControl(double dt)
 	// TODO Custom Norobo mode
   if(mode_flag == rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_ALTITUDE)
   {
+    double sinp = sin(xhat_.phi);
+    double cosp = cos(xhat_.phi);
+    double sint = sin(xhat_.theta);
+    double cost = cos(xhat_.theta);
+    double pddot =
+        -sint * xhat_.u + sinp * cost * xhat_.v + cosp * cost * xhat_.w;
+
     // Nested Loop for Altitude
     double pddot_c = PID_d_.computePID(xc_.pd, xhat_.pd, dt, pddot);
     xc_.az = PID_z_dot_.computePID(pddot_c, pddot, dt);
 
     // Compute desired thrust based on current pose
-    double cosp = cos(xhat_.phi);
-    double cost = cos(xhat_.theta);
+	// TODO For some reason won't hold the height. Check the throttle value! maybe it's being maxed out
     xc_.throttle = (1.0 - xc_.az) * throttle_eq_ / cosp / cost;
 
-		// The rest of the parameters will be sent in the next if block
-		mode_flag = rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_THROTTLE;
+	// tHE REST OF THE PARAMETERS WILL BE SENT IN THE NEXT IF BLOCK
+	mode_flag = rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_THROTTLE;
   }
 
   if(mode_flag == rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_THROTTLE)
