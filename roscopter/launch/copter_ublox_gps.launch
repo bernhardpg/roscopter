@@ -11,12 +11,13 @@
   
   <!-- GPS Node-->
 	<!-- ROS node for communicating between roscopter and Ublox driver -->
-  <node name="gnss_ublox_m7" pkg="roscopter" type="gnss_ublox_m7.py">
+  <node name="gnss_ublox" pkg="roscopter" type="gnss_ublox.py">
   </node> 
 
   <!-- GPS Node-->
-	<!-- TODO For some reason this wont work -->
+	<!-- TODO This node often fails to init, so it is better to start this node manually-->
 	<!-- General Ublox driver -->
+	<!-- Needs to be installed to catkin_ws from https://github.com/KumarRobotics/ublox-->
 	<!--<node name="ublox_gps" pkg="ublox_gps" type="ublox_gps">
     <param name="device" value="/dev/ttyAMA0"/>
 	</node> -->
