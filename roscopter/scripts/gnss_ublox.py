@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 import pyproj
 import math
@@ -19,8 +19,8 @@ class gnss_ublox:
             "ublox_gps/fix_velocity", TwistWithCovarianceStamped, self.fix_velocity_callback
         )
 
-        self.pub = rospy.Publisher("ublox_gnss_test", GNSS, queue_size=1000)
-	rospy.spin()
+        self.pub = rospy.Publisher("gnss", GNSS, queue_size=1000)
+        rospy.spin()
 
     def lla_to_ecef(self, coord_lla):
         lon, lat, alt = coord_lla
@@ -28,8 +28,8 @@ class gnss_ublox:
         return [x, y, z]
 
     def fix_callback(self, msg):
-        pos_lla = [msg.latitude, msg.longitude, msg.altitude]  # lat, long, alt
-        self.pos = self.lla_to_ecef(pos_lla)
+        position_lla = [msg.latitude, msg.longitude, msg.altitude]  # lat, long, alt
+        self.position = self.lla_to_ecef(position_lla)
 
         # covariance matrix is diagonal, and lat/long covariance are equal
         std_x_squared = msg.position_covariance[0]
@@ -42,7 +42,7 @@ class gnss_ublox:
 
         rf_msg = GNSS()
         rf_msg.header.stamp = msg.header.stamp
-        rf_msg.position = self.pos
+        rf_msg.position = self.position
         rf_msg.velocity = self.velocity
         rf_msg.horizontal_accuracy = self.horizontal_accuracy
         rf_msg.vertical_accuracy = self.vertical_accuracy
@@ -65,7 +65,7 @@ class gnss_ublox:
 
         rf_msg = GNSS()
         rf_msg.header.stamp = msg.header.stamp
-        rf_msg.position = self.pos
+        rf_msg.position = self.position
         rf_msg.velocity = self.velocity
         rf_msg.horizontal_accuracy = self.horizontal_accuracy
         rf_msg.vertical_accuracy = self.vertical_accuracy
