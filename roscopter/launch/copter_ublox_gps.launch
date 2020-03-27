@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+
+<launch>
+
+
+  <!-- FCU communication -->
+  <node name="rosflight_io" pkg="rosflight" type="rosflight_io" output="screen">
+    <param name="udp" value="false"/>
+    <param name="port" value="/dev/ttyACM0"/>
+  </node>
+  
+  <!-- GPS Node-->
+	<!-- ROS node for communicating between roscopter and Ublox driver -->
+  <node name="gnss_ublox" pkg="roscopter" type="gnss_ublox.py">
+  </node> 
+
+  <!-- GPS Node-->
+	<!-- TODO This node often fails to init, so it is better to start this node manually-->
+	<!-- General Ublox driver -->
+	<!-- Needs to be installed to catkin_ws from https://github.com/KumarRobotics/ublox-->
+	<!--<node name="ublox_gps" pkg="ublox_gps" type="ublox_gps">
+    <param name="device" value="/dev/ttyAMA0"/>
+	</node> -->
+  
+  <!-- Load common parameters -->
+  <rosparam command="load" file="$(find roscopter)/params/F450.yaml"/>
+
+  <!-- PID Position Controller -->
+  <node name="controller" pkg="roscopter" type="controller">
+    <remap from="estimate" to="odom"/>
+  </node>
+
+  <!-- Estimator -->
+  <rosparam command="load" file="$(find roscopter)/params/ekf.yaml" ns="estimator"/>
+  <node name="estimator" type="ekf_node" pkg="roscopter" output="screen">
+    <remap from="imu" to="/imu/data"/>
+    <remap from="baro" to="/baro"/>
+
+  </node>
+
+  <!-- Waypoint Manager -->
+  <node name="waypoint_manager" pkg="roscopter" type="waypoint_manager.py" output="screen">
+    <remap from="waypoint" to="high_level_command"/>
+    <remap from="state" to="odom"/>
+  </node>
+
+</launch>
