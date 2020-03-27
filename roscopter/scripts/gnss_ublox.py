@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import rospy
 import pyproj
 import math
@@ -40,15 +40,7 @@ class gnss_ublox:
         if self.velocity == None: # Wait for both pos and vel to be updated
             return
 
-        rf_msg = GNSS()
-        rf_msg.header.stamp = msg.header.stamp
-        rf_msg.position = self.position
-        rf_msg.velocity = self.velocity
-        rf_msg.horizontal_accuracy = self.horizontal_accuracy
-        rf_msg.vertical_accuracy = self.vertical_accuracy
-        rf_msg.speed_accuracy = self.speed_accuracy
-
-        self.pub.publish(rf_msg)
+        self.publish_gnss_data(msg.header.stamp)
 
     def fix_velocity_callback(self, msg):
         self.velocity = [
@@ -63,8 +55,11 @@ class gnss_ublox:
         if self.position == None: # Wait for both pos and vel to be updated
             return
 
+        self.publish_gnss_data(msg.header.stamp)
+
+    def publish_gnss_data(self, msg_header_stamp):
         rf_msg = GNSS()
-        rf_msg.header.stamp = msg.header.stamp
+        rf_msg.header.stamp = msg_header_stamp
         rf_msg.position = self.position
         rf_msg.velocity = self.velocity
         rf_msg.horizontal_accuracy = self.horizontal_accuracy
@@ -72,7 +67,7 @@ class gnss_ublox:
         rf_msg.speed_accuracy = self.speed_accuracy
 
         self.pub.publish(rf_msg)
-        return
+
 
 
 if __name__ == "__main__":
