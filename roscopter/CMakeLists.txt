@@ -63,7 +63,7 @@ add_executable(controller
   src/controller/controller.cpp
   include/controller/controller.h
   src/controller/simple_pid.cpp)
-add_dependencies(controller ${catkin_EXPORTED_TARGETS})
+add_dependencies(controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(controller ${catkin_LIBRARIES})
 
 add_library(ekf
