@@ -30,7 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_plugins
 )
 
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 3.3.9 REQUIRED)
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 catkin_package(

@@ -17,6 +17,7 @@
   <build_depend>rospy</build_depend>
   <build_depend>rosflight_msgs</build_depend>
   <build_depend>rosflight_utils</build_depend>
+  <build_depend>roscopter_utils</build_depend>
   <build_depend>eigen_conversions</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
@@ -29,6 +30,7 @@
   <run_depend>rospy</run_depend>
   <run_depend>rosflight_msgs</run_depend>
   <run_depend>rosflight_utils</run_depend>
+  <run_depend>roscopter_utils</run_depend>
   <run_depend>eigen_conversions</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>

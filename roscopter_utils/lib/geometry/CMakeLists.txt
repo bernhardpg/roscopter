@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.7)
 project (geometry)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 3.3.9 REQUIRED)
 
 add_library(geometry INTERFACE)
 target_include_directories(geometry INTERFACE
