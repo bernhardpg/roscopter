@@ -44,7 +44,7 @@ void TrajectoryOptimization::addConstraintsToProg() {
     Vector<Expression, 12> dynamics_expression = this->drone.discrete_dynamics(stateRow, nextStateRow, thrustRow, this->dt);
 
     for (int d = 0; d < NoroboConstants::droneNumberOfStates; d++) {
-        this->prog.AddLinearConstraint(dynamics_expression(d) == 0);
+        this->prog.AddConstraint(dynamics_expression(d) == 0);
     }
 
     counter += 1;

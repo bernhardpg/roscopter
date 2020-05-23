@@ -36,9 +36,8 @@ class Drone:
         # dphi, dtheta, dgamma = np.array([p, q, r])
         # dp, dq, dr = np.array([(1/ixx)*t_phi, (1/iyy)*t_theta, (1/izz)*t_gamma])
 
-
         dx, dy, dz = np.array([u, v, w])
-        du, dv, dw =   1/m*np.array([0, 0, -f])
+        du, dv, dw = np.array([-g*theta, g*phi, -f/m])
         dphi, dtheta, dgamma = np.array([p, q, r])
         dp, dq, dr = np.array([(1/ixx)*t_phi, (1/iyy)*t_theta, (1/izz)*t_gamma])
 

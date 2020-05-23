@@ -27,9 +27,9 @@ class TrajectoryOptimization {
   DroneState initialState;
   DroneState finalState;
   Drone drone;
-  MathematicalProgram prog;
 
   public:
+  MathematicalProgram prog;
   Eigen::Matrix<Variable, Eigen::Dynamic, droneNumberOfStates> state_var;
   Eigen::Matrix<Variable, Eigen::Dynamic, droneNumberOfControl> thrust_var;
   Binding<LinearConstraint> initalConstraint;

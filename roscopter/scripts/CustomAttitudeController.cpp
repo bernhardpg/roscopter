@@ -5,6 +5,19 @@
 #include "CustomAttitudeController.h"
 #include "configParser.h"
 #include "Eigen/Dense" // TODO: Update Eigen.
+
+#include <gflags/gflags.h>
+#include "drake/examples/quadrotor/quadrotor_geometry.h"
+#include "drake/examples/quadrotor/quadrotor_plant.h"
+#include "drake/geometry/geometry_visualization.h"
+#include "drake/systems/analysis/simulator.h"
+#include "drake/systems/framework/diagram_builder.h"
+#include "drake/systems/controllers/finite_horizon_linear_quadratic_regulator.h"
+#include "drake/solvers/snopt_solver.h"
+#include "drake/math/matrix_util.h"
+#include "drake/systems/trajectory_optimization/direct_collocation.h"
+
+
 using namespace Eigen;
 using namespace std;
 using namespace NoroboConstants;
@@ -68,7 +81,33 @@ DroneState CustomAttitudeController::getCurrentState(){
    return currentState;
 }
 
+template<typename T>
+std::vector<double> linspace(T start_in, T end_in, int num_in)
+{
 
+  std::vector<double> linspaced;
+
+  double start = static_cast<double>(start_in);
+  double end = static_cast<double>(end_in);
+  double num = static_cast<double>(num_in);
+
+  if (num == 0) { return linspaced; }
+  if (num == 1)
+  {
+    linspaced.push_back(start);
+    return linspaced;
+  }
+
+  double delta = (end - start) / (num - 1);
+
+  for(int i=0; i < num-1; ++i)
+  {
+    linspaced.push_back(start + delta * i);
+  }
+  linspaced.push_back(end); // I want to ensure that start and end
+  // are exactly the same as the input
+  return linspaced;
+}
 
 void CustomAttitudeController::runControl(const ros::TimerEvent &e){
 //  this->trajectoryController.getPath()
@@ -90,6 +129,9 @@ void CustomAttitudeController::runControl(const ros::TimerEvent &e){
   std::cout << "window size = " << slidingWindowSize << ", planningTimesteps = " << this->config.planningTimesteps << "planning dt = " << this->config.planningDt;
   clock_t tStart = clock();
 
+  TrajectoryOptimization testController(config.planningTimesteps, config.planningDt, drone, currentState, finalState);
+  testController.addConstraintsToProg();
+
   int windowEnd = this->currentProgress + slidingWindowSize;
   MatrixXd stateWindow = std::get<0>(this->controlPlan)(Eigen::seq(this->currentProgress,windowEnd), Eigen::all);
   MatrixXd thrustWindow = std::get<1>(this->controlPlan)(Eigen::seq(this->currentProgress,windowEnd), Eigen::all);
@@ -104,6 +146,11 @@ void CustomAttitudeController::runControl(const ros::TimerEvent &e){
     this->trajectoryOptimization.initalConstraint.evaluator()->set_bounds(currentState, currentState);
     this->trajectoryOptimization.finalConstraint.evaluator()->set_bounds(goalState, goalState);
     currentPlan = this->trajectoryOptimization.getPath();
+    auto constraints_leq   = this->trajectoryOptimization.prog.linear_equality_constraints();
+    auto constraints_lines = this->trajectoryOptimization.prog.linear_constraints();
+    auto constraints_l     = this->trajectoryOptimization.prog.linear_complementarity_constraints();
+
+    currentPlan = testController.getPath();
   }
   else{
     currentPlan = pair(get<0>(this->controlPlan)(seq(this->currentProgress, last), all),get<1>(this->controlPlan)(seq(this->currentProgress, last), all));
@@ -166,6 +213,59 @@ CustomAttitudeController::CustomAttitudeController(DroneState initialState, Dron
       printf("thrustPlan = %s \n", matrixToString(std::get<1>(this->controlPlan).row(i)).c_str());
     }
   }
+
+  DiagramBuilder<double> builder;
+
+  auto plant = builder.AddSystem<QuadrotorPlant<double>>();
+  auto plant_context =  plant->CreateDefaultContext();
+
+  Eigen::Matrix<double, 12, 12> Q = Eigen::Matrix<double, 12, 12>::Identity();
+  Q(0,0) = 5;
+  Q(1,1) = 5;
+  Q(2,2) = 10;
+
+  Eigen::Matrix<double, 4, 4> R = Eigen::Matrix<double, 4, 4>::Identity();
+
+  Eigen::VectorXd end_goal{((Eigen::Matrix<double, 1, 12>() << 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0).
+    finished())};
+
+  std::vector<double> time = linspace<double>(0, dt*numberOfTimesteps, numberOfTimesteps);
+  std::vector<Eigen::MatrixXd> pathValues(time.size());
+  Matrix<double, Eigen::Dynamic, droneNumberOfStates> pathMatrix = std::get<0>(this->controlPlan);
+  for (int i = 0; i < numberOfTimesteps; i++){
+    pathValues[i] = pathMatrix.row(i).transpose();
+  }
+
+  std::vector<Eigen::MatrixXd> thrust_out(time.size());
+  for (int i = 0; i < numberOfTimesteps; i++){
+    thrust_out[i] = Eigen::VectorXd::Ones(4);
+  }
+
+  const auto desired_trajectory = trajectories::PiecewisePolynomial<double>::FirstOrderHold(time, pathValues);
+  const auto pp_thrust = trajectories::PiecewisePolynomial<double>::FirstOrderHold(time, thrust_out);
+
+  systems::controllers::FiniteHorizonLinearQuadraticRegulatorOptions options;
+  options.x0 = &desired_trajectory;
+  options.u0 = &pp_thrust;
+  options.Qf = Q;
+  auto regulator = builder.AddSystem(
+    systems::controllers::MakeFiniteHorizonLinearQuadraticRegulator(
+      *plant, *plant_context, options.x0->start_time(),
+      options.x0->end_time(), Q, R, options));
+
+  std::cout << "we are finished";
+  builder.Connect(regulator->get_output_port(0), plant->get_input_port(0));
+  builder.Connect(plant->get_output_port(0), regulator->get_input_port(0));
+
+
+  VectorXd test_state = Vector<double, 12>::Identity();
+
+  auto context = regulator->CreateDefaultContext();
+  context->SetTime(0);
+  context->FixInputPort(0, test_state);
+  Eigen::VectorXd u = regulator->get_output_port(0).Eval(*context);
+  std::cout << "u = " << u ;
+
   ROS_INFO("Found config!");
   ros::spin();
 }
@@ -174,7 +274,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "pid_controller");
   DroneState finalState;
-  finalState << 0, 0, -3, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+  finalState << 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
   Config config = ConfigParser::getConfig();
   Drone drone(config.initialState, droneMass, droneIX, droneIY, droneIZ); // TODO: Find better name for droneIY, IZ and iX

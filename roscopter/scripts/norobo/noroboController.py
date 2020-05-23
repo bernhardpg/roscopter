@@ -19,9 +19,10 @@ command_pub = None
 current_state = None
 K, S = None, None  # Used in LQR
 run_mode = RunState.KTH_NED
-controller = TrajectoryOptimization(time_steps=30, dt=control_rate)
-# controller = LQRController()
+# controller = TrajectoryOptimization(time_steps=30, dt=control_rate)
+controller = LQRController()
 current_control_progress = 0
+
 
 def arm():
     arm_pub = rospy.Publisher('norobo_command', NoroboCommand, queue_size=10)
@@ -70,12 +71,13 @@ def control_loop(timer):
         return
     # if len(controller.getU()) == current_control_progress:
     #     print("done with executing plan")
-    # u = controller.getU(current_state, get_desired_state())
+    print("current state = ", current_state.inertial_position.z)
+    u = controller.getU(current_state, get_desired_state())
 
-    u = controller.getU()[current_control_progress]
-    u_before = u[3]
-    u[3] = solveForGain(u[3]/4)
-    print("u(b) = {}, u(a) = {}".format(u_before, u[3]))
+    # u = controller.getU()[current_control_progress]
+    # u_before = u[3]
+    # u[3] = solveForGain(u[3]/4)
+    # print("u(b) = {}, u(a) = {}".format(u_before, u[3]))
 
     current_control_progress += 1
 
@@ -91,7 +93,7 @@ def talker():
     current_state = State()
     print("Running trajectory planning...")
     start_time = time.time()
-    controller.generate_path()
+    # controller.generate_path()
 
     print("arming")
     arm()
