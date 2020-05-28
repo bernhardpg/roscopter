@@ -157,9 +157,7 @@ void CustomAttitudeController::runControl(const ros::TimerEvent &e){
   }
   Vector4d nextControl = get<1>(currentPlan).row(0);
   double thrust = translateForceToThrust(nextControl(3)/4);
-
   printf("Time taken2: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
-
   this->send_command(nextControl(0), nextControl(1), nextControl(2), thrust);
   this->currentProgress += 1;
 
@@ -167,7 +165,7 @@ void CustomAttitudeController::runControl(const ros::TimerEvent &e){
     printf("-------%d-------", this->currentProgress);
     printf("Current state = \n %s \n", matrixToString(currentState).c_str());
     printf("Goal state = %s\n", matrixToString(goalState).c_str());
-    printf("Thrust = \n%s, \nforce = %e\n", matrixToString(nextControl).c_str(), nextControl(3));
+    printf("Thrust = \n%s, \nforce = %e, thrust = %e\n", matrixToString(nextControl).c_str(), nextControl(3), thrust);
   }
 
   if (this->config.stateDebug >= 2){
@@ -214,57 +212,7 @@ CustomAttitudeController::CustomAttitudeController(DroneState initialState, Dron
     }
   }
 
-  DiagramBuilder<double> builder;
-
-  auto plant = builder.AddSystem<QuadrotorPlant<double>>();
-  auto plant_context =  plant->CreateDefaultContext();
-
-  Eigen::Matrix<double, 12, 12> Q = Eigen::Matrix<double, 12, 12>::Identity();
-  Q(0,0) = 5;
-  Q(1,1) = 5;
-  Q(2,2) = 10;
-
-  Eigen::Matrix<double, 4, 4> R = Eigen::Matrix<double, 4, 4>::Identity();
-
-  Eigen::VectorXd end_goal{((Eigen::Matrix<double, 1, 12>() << 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0).
-    finished())};
-
-  std::vector<double> time = linspace<double>(0, dt*numberOfTimesteps, numberOfTimesteps);
-  std::vector<Eigen::MatrixXd> pathValues(time.size());
-  Matrix<double, Eigen::Dynamic, droneNumberOfStates> pathMatrix = std::get<0>(this->controlPlan);
-  for (int i = 0; i < numberOfTimesteps; i++){
-    pathValues[i] = pathMatrix.row(i).transpose();
-  }
-
-  std::vector<Eigen::MatrixXd> thrust_out(time.size());
-  for (int i = 0; i < numberOfTimesteps; i++){
-    thrust_out[i] = Eigen::VectorXd::Ones(4);
-  }
-
-  const auto desired_trajectory = trajectories::PiecewisePolynomial<double>::FirstOrderHold(time, pathValues);
-  const auto pp_thrust = trajectories::PiecewisePolynomial<double>::FirstOrderHold(time, thrust_out);
-
-  systems::controllers::FiniteHorizonLinearQuadraticRegulatorOptions options;
-  options.x0 = &desired_trajectory;
-  options.u0 = &pp_thrust;
-  options.Qf = Q;
-  auto regulator = builder.AddSystem(
-    systems::controllers::MakeFiniteHorizonLinearQuadraticRegulator(
-      *plant, *plant_context, options.x0->start_time(),
-      options.x0->end_time(), Q, R, options));
-
-  std::cout << "we are finished";
-  builder.Connect(regulator->get_output_port(0), plant->get_input_port(0));
-  builder.Connect(plant->get_output_port(0), regulator->get_input_port(0));
-
-
   VectorXd test_state = Vector<double, 12>::Identity();
-
-  auto context = regulator->CreateDefaultContext();
-  context->SetTime(0);
-  context->FixInputPort(0, test_state);
-  Eigen::VectorXd u = regulator->get_output_port(0).Eval(*context);
-  std::cout << "u = " << u ;
 
   ROS_INFO("Found config!");
   ros::spin();

@@ -1,6 +1,6 @@
 windowSize=20
 stateDebug=2
 planningTimesteps=20
-planningDt=0.05
+planningDt=0.1
 enableRollingWindow=1
 initialState=0,0,0,0,0,0,0,0,0,0,0,0

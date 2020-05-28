@@ -33,6 +33,7 @@ void TrajectoryOptimization::addConstraintsToProg() {
     this->prog.AddLinearConstraint(this->thrust_var(i, 1) <= 20);
     this->prog.AddLinearConstraint(this->thrust_var(i, 2) <= 20);
     this->prog.AddLinearConstraint(this->thrust_var(i, 3) <= NoroboConstants::droneMass * NoroboConstants::g * 2);
+    this->prog.AddLinearConstraint(this->thrust_var(i, 3) >= 0);
   }
 
   int counter = 0;

@@ -80,7 +80,9 @@ def control_loop(timer):
     # print("u(b) = {}, u(a) = {}".format(u_before, u[3]))
 
     current_control_progress += 1
-
+    print("U[3] = {}".format(u[3]))
+    # u[3] = 1.0/
+    u[3] = 0.5364
     send_command(u[0], u[1], u[2], u[3])
 import time
 def talker():

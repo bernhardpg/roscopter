@@ -16,8 +16,8 @@
 #include <string>
 
 #include "ros/ros.h"
-#include "rosflight_utils/Quaternion.h"
-#include "rosflight_utils/QuaternionMath.h"
+#include "rosflight_utils/quaternion.h"
+#include "rosflight_utils/quaternionMath.h"
 #include "TrajectoryOptimization.h"
 
 #include "Drone.h"

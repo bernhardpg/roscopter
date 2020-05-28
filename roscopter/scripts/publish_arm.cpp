@@ -4,8 +4,8 @@
 #include <rosflight_msgs/Command.h>
 #include <rosflight_msgs/Barometer.h>
 #include <rosflight_msgs/GNSSRaw.h>
-#include "rosflight_utils/Quaternion.h"
-#include "rosflight_utils/QuaternionMath.h"
+#include "rosflight_utils/quaternion.h"
+#include "rosflight_utils/quaternionMath.h"
 #include <sensor_msgs/Imu.h>
 
 #include "PID_controller.h"

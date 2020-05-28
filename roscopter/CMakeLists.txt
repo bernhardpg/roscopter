@@ -21,12 +21,9 @@ include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 set(GCC_COVERAGE_LINK_FLAGS    "-g")
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}")
 
-#include_directories(/home/lars/norobotics/libs/drake/build/install/include) # TODO: change path. Maybe enable find_package(drake)
-#link_directories(/home/lars/norobotics/libs/drake/build/install/lib)
+list(APPEND CMAKE_PREFIX_PATH /opt/drake-latest-bionic/drake)
 
-link_directories(/home/lars/Downloads/drake/lib)
-include_directories(/home/lars/Downloads/drake/include)
-
+find_package(drake REQUIRED)
 find_package(Eigen3 3.3.9 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(inertial_sense QUIET)
@@ -34,7 +31,7 @@ find_package(inertial_sense QUIET)
 
 #include_directories(${CMAKE_SOURCE_DIR}/rosflight/rosflight_utils/include)
 
-set(catkin_LIBRARIES ${catkin_LIBRARIES} drake fmt)
+set(catkin_LIBRARIES ${catkin_LIBRARIES} drake::drake)
 
 if (${inertial_sense_FOUND})
     message(WARNING "found inertial sense library")

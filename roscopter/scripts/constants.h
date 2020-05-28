@@ -19,7 +19,7 @@ namespace NoroboConstants{
   const double droneIZ = 0.12;
 //  const int planningTimesteps = 50;
 //  const double planningDt = 0.05;
-  const string configName = "/home/lars/catkin_ws/src/roscopter/roscopter/scripts/config.txt";  // TODO: Move config.txt to a better location.
+  const string configName = "/home/larserik/norobo/catkin_ws/src/roscopter/roscopter/scripts/config.txt";  // TODO: Move config.txt to a better location.
 }
 
 #endif //NOROBO_CONSTANTS_H
